@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero de Indicadores — GROUP VALPOB S.R.L.</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f2;color:#222;font-size:14px}
+.topbar{background:#1A1A2E;color:#fff;padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.topbar-title{font-size:16px;font-weight:600}
+.topbar-sub{font-size:11px;color:#9FE1CB;margin-top:3px}
+.topbar-right{font-size:11px;color:#9FE1CB;text-align:right}
+.container{max-width:1180px;margin:0 auto;padding:1.2rem 1.5rem 3rem}
+.tabs{display:flex;border-bottom:1.5px solid #D3D1C7;margin-bottom:1.2rem;overflow-x:auto;gap:0}
+.tab{font-size:12px;padding:.55rem 1rem;cursor:pointer;color:#5F5E5A;border:none;border-bottom:2px solid transparent;margin-bottom:-1.5px;background:none;white-space:nowrap}
+.tab.active{color:#1A1A2E;border-bottom-color:#1A1A2E;font-weight:700}
+.tab.admin{color:#9FE1CB;background:#1A1A2E;border-radius:6px 6px 0 0}
+.tab.admin.active{color:#fff}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.section-title{font-size:10.5px;font-weight:700;color:#888780;letter-spacing:.09em;text-transform:uppercase;margin:1.3rem 0 .6rem;padding-bottom:.3rem;border-bottom:.5px solid #D3D1C7;display:flex;justify-content:space-between;align-items:center}
+.section-title:first-of-type{margin-top:0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:.5rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:.5rem}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:.5rem}
+@media(max-width:760px){.grid4,.grid3{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+.kpi{background:#fff;border-radius:8px;padding:.9rem 1rem;border:.5px solid #D3D1C7}
+.kpi-label{font-size:11px;color:#5F5E5A;margin-bottom:.35rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi-value{font-size:23px;font-weight:700;color:#1A1A2E;line-height:1}
+.kpi-sub{font-size:11px;margin-top:.35rem;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kpi-meta{font-size:10px;color:#888780;margin-top:.25rem}
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700}
+.b-ok{background:#dcfce7;color:#166534}
+.b-warn{background:#fef9c3;color:#854d0e}
+.b-bad{background:#fee2e2;color:#991b1b}
+.b-info{background:#dbeafe;color:#1e40af}
+.b-neu{background:#f1efe8;color:#5F5E5A}
+.progress-wrap{background:#f1efe8;border-radius:99px;height:5px;width:100%;margin-top:6px}
+.progress-bar{height:5px;border-radius:99px}
+.p-ok{background:#22c55e}.p-warn{background:#f59e0b}.p-bad{background:#ef4444}
+.chart-card{background:#fff;border:.5px solid #D3D1C7;border-radius:10px;padding:1rem 1.25rem;margin-bottom:10px}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:.25rem}
+.chart-sub{font-size:11px;color:#5F5E5A;margin-bottom:.7rem}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#888780;padding:6px 8px;border-bottom:1px solid #D3D1C7}
+td{padding:7px 8px;border-bottom:1px solid #ECEAE2;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.note{font-size:11px;color:#5F5E5A;background:#f1efe8;border-radius:6px;padding:.6rem .8rem;margin-top:.5rem;line-height:1.5}
+.obj-card{background:#fff;border:.5px solid #D3D1C7;border-radius:10px;padding:1rem 1.15rem;margin-bottom:10px}
+.obj-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.obj-title{font-size:13.5px;font-weight:700;color:#1A1A2E;max-width:70%}
+.obj-meta{font-size:11px;color:#5F5E5A;margin-top:6px;line-height:1.6}
+.obj-tag{font-size:10px;color:#5F5E5A;background:#f1efe8;border-radius:5px;padding:2px 7px;display:inline-block;margin-right:5px;margin-top:4px}
+.foot{font-size:10.5px;color:#888780;text-align:center;margin-top:2rem}
+canvas{max-height:260px}
+input[type=text],input[type=number],select{font-size:12px;padding:4px 6px;border:1px solid #D3D1C7;border-radius:4px;width:100%;font-family:inherit}
+.btn{font-size:12px;padding:.4rem .9rem;border-radius:6px;border:none;cursor:pointer;font-weight:700}
+.btn-primary{background:#1A1A2E;color:#fff}
+.btn-danger{background:#fee2e2;color:#991b1b}
+.btn-ghost{background:#f1efe8;color:#5F5E5A}
+.btn-sm{font-size:11px;padding:.25rem .6rem;border-radius:5px;border:none;cursor:pointer}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:.8rem}
+.toolbar label{font-size:11px;color:#5F5E5A;margin-right:4px}
+.toast{position:fixed;bottom:20px;right:20px;background:#1A1A2E;color:#9FE1CB;padding:.6rem 1rem;border-radius:8px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Tablero de Indicadores y Objetivos — GROUP VALPOB S.R.L.</div>
+    <div class="topbar-sub">Sistema de Gestión Integrado · ISO 9001:2015</div>
+  </div>
+  <div class="topbar-right" id="topbar-period">Datos a Junio 2026<br>Stage 1 objetivo: Sept 2026</div>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" data-tab="resumen">Resumen ejecutivo</button>
+    <button class="tab" data-tab="objetivos">Objetivos 2026</button>
+    <button class="tab" data-tab="comercial">Comercial</button>
+    <button class="tab" data-tab="operaciones">Operaciones</button>
+    <button class="tab" data-tab="syh">Seg. e higiene</button>
+    <button class="tab" data-tab="calidad">Calidad &amp; compras</button>
+    <button class="tab" data-tab="doc">Documental</button>
+    <button class="tab" data-tab="rrhh">RRHH</button>
+    <button class="tab admin" data-tab="cargar">✎ Cargar datos</button>
+    <button class="tab admin" data-tab="config">⚙ Config. indicadores</button>
+  </div>
+
+  <!-- ===================== RESUMEN ===================== -->
+  <div id="resumen" class="tab-panel active">
+    <div class="section-title">Estado general — período mostrado: <span id="resumen-periodo"></span></div>
+    <div class="grid4" id="resumen-kpis"></div>
+    <div class="chart-card">
+      <div class="chart-title">Tendencia comercial — cotizaciones y % de aprobación por mes</div>
+      <div class="chart-sub">Enero a junio 2026</div>
+      <canvas id="ch-resumen-com"></canvas>
+    </div>
+    <div class="note">
+      <b>Lectura rápida:</b> lo más sólido del semestre es seguridad (0 accidentes formales, 0 casi-accidentes) y la gestión de NC (100% tratadas/cerradas). El punto de mayor atención de cara al Stage 1 de septiembre sigue siendo <b>documentación</b> y los indicadores de Operaciones sin dato cargado. Los valores de esta pestaña ahora se leen desde el período que cargues en "✎ Cargar datos" — si un mes no tiene un indicador cargado, aparece como "sin dato".
+    </div>
+  </div>
+
+  <!-- ===================== OBJETIVOS ===================== -->
+  <div id="objetivos" class="tab-panel">
+    <div class="section-title">Objetivos 2026</div>
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btn-agregar-objetivo">+ Agregar objetivo</button>
+      <button class="btn btn-ghost" id="btn-guardar-objetivos">✓ Guardar objetivos</button>
+      <button class="btn btn-danger" id="btn-restaurar-objetivos">↻ Restaurar valores originales</button>
+    </div>
+    <div id="objetivos-list"></div>
+    <div class="note">El estado de cada objetivo se calcula del indicador vinculado si tiene uno cargado; si no, se toma el % de avance que cargues manualmente. Cada objetivo tiene su propio plan de acción (acción, plazo, responsable, estado y resultado de eficacia).</div>
+  </div>
+
+  <!-- ===================== COMERCIAL (estático — fuente: análisis de cotizaciones) ===================== -->
+  <div id="comercial" class="tab-panel">
+    <div class="section-title">Indicadores de gestión comercial — período mostrado: <span id="comercial-periodo"></span></div>
+    <div class="grid3" id="comercial-kpis"></div>
+
+    <div class="section-title">Cotizaciones — resumen enero a junio 2026</div>
+    <div class="grid4">
+      <div class="kpi"><div class="kpi-label">Total de cotizaciones</div><div class="kpi-value">237</div><div class="kpi-meta">Monto total: $2.853.600.162</div></div>
+      <div class="kpi"><div class="kpi-label">Tasa de aprobación</div><div class="kpi-value">59,5%</div><div class="kpi-sub"><span class="badge b-ok">141 aprobadas</span></div></div>
+      <div class="kpi"><div class="kpi-label">Tasa de rechazo</div><div class="kpi-value">24,1%</div><div class="kpi-sub"><span class="badge b-warn">57 rechazadas</span></div></div>
+      <div class="kpi"><div class="kpi-label">Tasa de vencidas</div><div class="kpi-value">14,8%</div><div class="kpi-sub"><span class="badge b-bad">35 vencidas</span></div></div>
+    </div>
+    <div class="grid3">
+      <div class="kpi"><div class="kpi-label">Monto promedio por cotización</div><div class="kpi-value">$12,0 M</div><div class="kpi-meta">Mediana: $2,36 M</div></div>
+      <div class="kpi"><div class="kpi-label">Validez promedio</div><div class="kpi-value">20,9 días</div><div class="kpi-meta">Mediana: 14,6 días</div></div>
+      <div class="kpi"><div class="kpi-label">Cotizaciones con descuento</div><div class="kpi-value">7</div><div class="kpi-meta">de 237 (3,0%)</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Cotizaciones emitidas por mes y % de aprobación</div>
+      <canvas id="ch-com-mes"></canvas>
+    </div>
+    <div class="grid2">
+      <div class="chart-card" style="margin-bottom:0"><div class="chart-title">Distribución por estado</div><canvas id="ch-com-estado"></canvas></div>
+      <div class="chart-card" style="margin-bottom:0"><div class="chart-title">Desempeño por vendedor (% aprobación)</div><canvas id="ch-com-vendedor"></canvas></div>
+    </div>
+    <div class="section-title">Top 10 clientes por monto cotizado</div>
+    <div class="chart-card">
+      <table>
+        <tr><th>Cliente</th><th>Monto total</th><th>Cotizaciones</th></tr>
+        <tr><td>San Antonio Internacional S.A.</td><td>$684.191.892</td><td>17</td></tr>
+        <tr><td>Yacimiento Lindero Atravesado</td><td>$376.484.627</td><td>9</td></tr>
+        <tr><td>Wenlen S.A.</td><td>$252.498.566</td><td>2</td></tr>
+        <tr><td>Gas y Petróleo del Neuquén — Madalena Austral</td><td>$233.887.053</td><td>8</td></tr>
+        <tr><td>Oleoductos del Valle S.A.</td><td>$202.875.527</td><td>2</td></tr>
+        <tr><td>Pan American Energy LLC (YPF S.)</td><td>$196.348.359</td><td>7</td></tr>
+        <tr><td>Aluvional S.A.</td><td>$190.419.681</td><td>12</td></tr>
+        <tr><td>Superior Energy Services S.A.</td><td>$182.637.646</td><td>36</td></tr>
+        <tr><td>Ministerio de Desarrollo Humano (Gob. Locales)</td><td>$92.934.107</td><td>9</td></tr>
+        <tr><td>Enerflex Solutions Argentina S.R.L.</td><td>$90.639.538</td><td>32</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>Lectura comercial:</b> el año arrancó con aprobación floja (39-49% en ene-mar) y mejoró fuerte a partir de abril (71-73%), aunque bajó a 60% en junio. Soledad Mercau tiene 100% de aprobación (29/29) y Gonzalo Aranda concentra el mayor volumen de cotizaciones (98) pero la aprobación más baja del equipo (55%). Esta pestaña muestra el análisis de cotizaciones que me pasaste — no forma parte del sistema de carga mensual de indicadores, es un informe aparte.
+    </div>
+  </div>
+
+  <!-- ===================== OPERACIONES ===================== -->
+  <div id="operaciones" class="tab-panel">
+    <div class="section-title">Operaciones — período mostrado: <span id="operaciones-periodo"></span></div>
+    <div class="grid3" id="operaciones-kpis"></div>
+    <div class="note">Reclamos de clientes, cumplimiento de tareas y cumplimiento de partes diarios se cargan mes a mes desde "✎ Cargar datos".</div>
+  </div>
+
+  <!-- ===================== SEGURIDAD E HIGIENE ===================== -->
+  <div id="syh" class="tab-panel">
+    <div class="section-title">Seguridad e higiene — período mostrado: <span id="syh-periodo"></span></div>
+    <div class="grid4" id="syh-kpis"></div>
+    <div class="chart-card">
+      <div class="chart-title">Capacitaciones realizadas por mes</div>
+      <div class="chart-sub">PRP / cultura de seguridad</div>
+      <canvas id="ch-cap"></canvas>
+    </div>
+    <div class="note">
+      <b>Detalle de capacitaciones:</b> abril (28/04, PRP y cultura de seguridad), mayo (05/05 y 11/05, PRP y cultura de seguridad), junio (alineación de criterios sobre confección y aplicación de PRP, a raíz de una NC).
+    </div>
+  </div>
+
+  <!-- ===================== CALIDAD & COMPRAS ===================== -->
+  <div id="calidad" class="tab-panel">
+    <div class="section-title">SGI / Calidad — período mostrado: <span id="calidad-periodo"></span></div>
+    <div class="grid3" id="calidad-kpis"></div>
+    <div class="section-title">Compras</div>
+    <div class="grid3" id="compras-kpis"></div>
+    <div class="section-title">Dirección / SGI</div>
+    <div class="grid3" id="direccion-kpis"></div>
+    <div class="note">
+      Ambas NC del período (18145 y 18202) fueron tratadas y cerradas con eficacia verificada, y no hay reclamos ni incumplimientos de proveedores.
+    </div>
+  </div>
+
+  <!-- ===================== DOCUMENTAL ===================== -->
+  <div id="doc" class="tab-panel">
+    <div class="section-title">Control documental — período mostrado: <span id="doc-periodo"></span></div>
+    <div class="grid3" id="doc-kpis"></div>
+    <div class="note">
+      El % general agrega Personal + Vehículos + Responsabilidad Civil sin distinguir todavía qué vencimientos son críticos de los de criticidad moderada.
+    </div>
+  </div>
+
+  <!-- ===================== RRHH ===================== -->
+  <div id="rrhh" class="tab-panel">
+    <div class="section-title">RRHH — ausentismo y capacitación — período mostrado: <span id="rrhh-periodo"></span></div>
+    <div class="grid3" id="rrhh-kpis"></div>
+    <div class="note" id="rrhh-nota"></div>
+
+    <div class="section-title">Vacaciones y licencias adeudadas (por empleado)</div>
+    <div class="grid3">
+      <div class="kpi"><div class="kpi-label">Colaboradores con vacaciones adeudadas</div><div class="kpi-value">14</div><div class="kpi-sub"><span class="badge b-warn">de 45 (31%)</span></div><div class="kpi-meta">Meta: 0 (sin deuda acumulada)</div></div>
+      <div class="kpi"><div class="kpi-label">Total días de vacaciones adeudados</div><div class="kpi-value">119</div><div class="kpi-sub"><span class="badge b-warn">Promedio 8,5 días entre quienes deben</span></div><div class="kpi-meta">Suma de "saldo pendiente de tomar"</div></div>
+      <div class="kpi"><div class="kpi-label">Licencia por trámite pendiente de goce</div><div class="kpi-value">128 días</div><div class="kpi-sub"><span class="badge b-info">44 de 45 colaboradores</span></div><div class="kpi-meta">Casi todo el plantel con LxT sin gozar</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribución de colaboradores por días de vacaciones adeudados</div>
+      <canvas id="ch-vac-dist"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Detalle por colaborador</div>
+      <div class="chart-sub">Ordenado por días de vacaciones adeudados · Fuente: Registro de Vacaciones y Reemplazos, Group Valpob</div>
+      <table>
+        <tr><th>Sector</th><th>Colaborador</th><th>Vac. adeudadas</th><th>LxT pendiente</th><th>Francos pend.</th><th>Sanciones</th><th>Estado</th></tr>
+        <tr><td>TRAILER</td><td>Benedetti, Fabian Alejandro</td><td>21</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-bad">Crítico</span></td></tr>
+        <tr><td>ADMIN</td><td>Ferreira Valenzuela, Nicolas Samuel</td><td>14</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-bad">Crítico</span></td></tr>
+        <tr><td>TG5</td><td>Gaviña Fernadez, Rodrigo</td><td>13</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>TG2</td><td>Acuña, Javier Armando</td><td>7</td><td>1</td><td><span style="color:#991b1b">-1</span></td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>S&H</td><td>Caferri, Giuliana</td><td>7</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>FR</td><td>Castellano, Juan Emanuel</td><td>7</td><td>2</td><td><span style="color:#991b1b">-1</span></td><td>1</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>TG2</td><td>Fraticelli, Matias Damian</td><td>7</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>TG5</td><td>Garces, Gustavo Daniel</td><td>7</td><td>3</td><td>0</td><td>1</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>ADMIN</td><td>Mercau, Sabrina Soledad</td><td>7</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>TG1</td><td>Pichunman, Guillermo Joel</td><td>7</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>TG4</td><td>Riquelme, Javier Nestor</td><td>7</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>TG5</td><td>Vidal, Leonardo</td><td>7</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-warn">Atención</span></td></tr>
+        <tr><td>ADMIN</td><td>Gonzalez, Ivan Aaron</td><td>5</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-info">Leve</span></td></tr>
+        <tr><td>ADMIN</td><td>Valdez Valenzuela, Virginia Lucy</td><td>3</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-info">Leve</span></td></tr>
+        <tr><td>UOCRA</td><td>Aguirre, Alejandro</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>ADMIN</td><td>Alarcon, Gimena Soledad</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>MONOT</td><td>Aranda, Gonzalo Francisco</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG3</td><td>Bravo, Alexis Leandro</td><td>0</td><td>3</td><td>0</td><td>1</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Castro, Sandro</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>ALAM</td><td>Ferreira, Hector ISMAEL</td><td>0</td><td>3</td><td>0</td><td>1</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Gonzalez, Cristian Daniel</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG4</td><td>Jara, Andres Sebastian</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Mallea Orellano, Victor Manuel</td><td>0</td><td>3</td><td>0</td><td>1</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Monsalve, Javier Anibal</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG2</td><td>Nahuelan, Mario Alberto</td><td>0</td><td>2</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>ALAM</td><td>Olave, Ruben Maximiliano</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Olivera, Fernando Gabriel</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>FR</td><td>Opazo, Enzo Ezequiel</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Pistan, Esteban Maximiliano</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>MONOT</td><td>Poblete Romera, Roberto Ivan</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>SUP</td><td>Poblete Toledo, Ulises Maximiliano</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG3</td><td>Ranguileo, Segundo Francisco</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>FR</td><td>Roco, Dario Luciano</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>GLOBAL</td><td>Sanchez, Mauricio Javier</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG4</td><td>Silva, Braian Osvaldo</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>FR</td><td>Soto, Gonzalo Exequiel</td><td>0</td><td>3</td><td><span style="color:#991b1b">-1</span></td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>CHOFER</td><td>Treppo, Luciano Emanuel</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG1</td><td>Ustarez, Hugo Orlando</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Valdes  Tores, William Ignacio</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>ADMIN</td><td>Valdez Valenzuela, Estefania Marisol</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG1</td><td>Valenzuela Fernandez, Jose Alberto</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>SERENO</td><td>Valenzuela Lepe, Juan Carlos</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>ADMIN</td><td>Valenzuela Lepe, Cecilia Marisol</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>UOCRA</td><td>Vedia, Luis</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+        <tr><td>TG3</td><td>Villalon, Daniel Isaias</td><td>0</td><td>0</td><td>0</td><td>0</td><td><span class="badge b-ok">OK</span></td></tr>
+      </table>
+    </div>
+    <div class="note">
+      Esta tabla viene del archivo de Registro de Vacaciones y Reemplazos que me pasaste — es un informe aparte, no forma parte del sistema de carga mensual de indicadores (habría que subir un archivo nuevo cuando quieras actualizarla).
+    </div>
+  </div>
+
+  <!-- ===================== CARGAR DATOS ===================== -->
+  <div id="cargar" class="tab-panel">
+    <div class="section-title">Registro mensual de indicadores</div>
+    <div class="toolbar">
+      <label>Mes</label>
+      <select id="sel-mes"></select>
+      <label>Año</label>
+      <select id="sel-anio"></select>
+      <button class="btn btn-ghost" id="btn-cargar-guardado">Cargar guardado</button>
+      <button class="btn btn-primary" id="btn-guardar-periodo">✓ Guardar período</button>
+      <button class="btn btn-ghost" id="btn-exportar-csv">↓ Exportar CSV</button>
+      <button class="btn btn-danger" id="btn-borrar-periodo">Borrar período</button>
+    </div>
+    <div class="chart-card">
+      <table id="tabla-cargar">
+        <tr><th>Proceso</th><th>Indicador</th><th>Valor real</th><th>Meta</th><th>Unidad</th></tr>
+      </table>
+    </div>
+    <div class="note">Completá los valores reales del mes seleccionado y presioná "Guardar período". Los datos se guardan en este navegador (localStorage) — si abrís el tablero desde otra computadora no los vas a ver, así que exportá el CSV de vez en cuando para tener respaldo.</div>
+  </div>
+
+  <!-- ===================== CONFIG INDICADORES ===================== -->
+  <div id="config" class="tab-panel">
+    <div class="section-title">Configuración de indicadores — metas y parámetros</div>
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btn-agregar-indicador">+ Agregar indicador</button>
+      <button class="btn btn-ghost" id="btn-guardar-config">✓ Guardar configuración</button>
+      <button class="btn btn-danger" id="btn-restaurar-config">↻ Restaurar valores originales</button>
+    </div>
+    <div class="chart-card">
+      <table id="tabla-config">
+        <tr><th>Proceso</th><th>Indicador</th><th>Meta</th><th>Unidad</th><th>Dirección</th><th>Responsable</th><th></th></tr>
+      </table>
+    </div>
+    <div class="note">Editá proceso, nombre, meta, unidad, dirección (si "mayor es mejor" o "menor es mejor") y responsable de cada indicador. Los cambios se reflejan en todas las pestañas y en "Cargar datos" apenas guardás.</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="foot">Tablero de Indicadores y Objetivos — Group Valpob S.R.L. · Elaborado por ING Consultora Boutique</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ============================= DATOS BASE ============================= */
+var MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+var TAB_OPTIONS = [
+ {id:'comercial',   label:'Comercial'},
+ {id:'operaciones', label:'Operaciones'},
+ {id:'syh',         label:'Seg. e higiene'},
+ {id:'calidad',     label:'Calidad'},
+ {id:'compras',     label:'Compras'},
+ {id:'doc',         label:'Documental'},
+ {id:'rrhh',        label:'RRHH'},
+ {id:'direccion',   label:'Dirección / SGI'},
+ {id:'resumen',     label:'Solo en Resumen'}
+];
+function inferTabFromProceso(proceso){
+  var p = (proceso||'').trim().toLowerCase();
+  if(p.indexOf('seguridad')>=0) return 'syh';
+  if(p.indexOf('rrhh')>=0 || p.indexOf('recursos')>=0) return 'rrhh';
+  if(p.indexOf('calidad')>=0) return 'calidad';
+  if(p.indexOf('compras')>=0) return 'compras';
+  if(p.indexOf('document')>=0) return 'doc';
+  if(p.indexOf('operacion')>=0) return 'operaciones';
+  if(p.indexOf('comercial')>=0 || p.indexOf('venta')>=0 || p.indexOf('satisfac')>=0) return 'comercial';
+  if(p.indexOf('direcci')>=0 || p.indexOf('sgi')>=0) return 'direccion';
+  return 'resumen';
+}
+
+var DEFAULT_INDICADORES = [
+ {id:'acc',       proceso:'Seguridad e Higiene', indicador:'Accidentes laborales',                    meta:0,   unidad:'cant', dir:'min', responsable:'SST', tab:'syh'},
+ {id:'casi',      proceso:'Seguridad e Higiene', indicador:'Casi accidentes',                          meta:0,   unidad:'cant', dir:'min', responsable:'SST', tab:'syh'},
+ {id:'epp',       proceso:'Seguridad e Higiene', indicador:'Llamados de atención por EPP',             meta:0,   unidad:'cant', dir:'min', responsable:'SST', tab:'syh'},
+ {id:'bajas',     proceso:'Seguridad e Higiene', indicador:'Bajas por alcohol y/o drogas',              meta:0,   unidad:'cant', dir:'min', responsable:'RRHH', tab:'syh'},
+ {id:'cap',       proceso:'RRHH',                indicador:'Capacitaciones realizadas',                 meta:1,   unidad:'cant/mes', dir:'max', responsable:'RRHH', tab:'rrhh'},
+ {id:'ncc',       proceso:'Calidad',             indicador:'No conformidades del cliente',              meta:0,   unidad:'cant', dir:'min', responsable:'SGI', tab:'calidad'},
+ {id:'nctr',      proceso:'Calidad',             indicador:'% NC tratadas y cerradas',                  meta:100, unidad:'%', dir:'max', responsable:'SGI', tab:'calidad'},
+ {id:'efac',      proceso:'Calidad',             indicador:'% Eficacia de acciones correctivas',        meta:100, unidad:'%', dir:'max', responsable:'SGI', tab:'calidad'},
+ {id:'prov',      proceso:'Compras',             indicador:'% Proveedores evaluados',                   meta:100, unidad:'%', dir:'max', responsable:'Compras', tab:'compras'},
+ {id:'reclprov',  proceso:'Compras',             indicador:'Reclamos a proveedores',                    meta:0,   unidad:'cant', dir:'min', responsable:'Compras', tab:'compras'},
+ {id:'insumos',   proceso:'Compras',             indicador:'Incumplimientos por falta de insumos críticos', meta:0, unidad:'cant', dir:'min', responsable:'Compras', tab:'compras'},
+ {id:'docvig',    proceso:'Documental',          indicador:'% Documentos vigentes',                     meta:100, unidad:'%', dir:'max', responsable:'Control Documental', tab:'doc'},
+ {id:'ausent',    proceso:'RRHH',                indicador:'% Ausentismo',                              meta:5,   unidad:'%', dir:'min', responsable:'RRHH', tab:'rrhh'},
+ {id:'reclcli',   proceso:'Operaciones',         indicador:'% Reclamos de clientes',                    meta:5,   unidad:'%', dir:'min', responsable:'Operaciones', tab:'operaciones'},
+ {id:'cumtar',    proceso:'Operaciones',         indicador:'% Cumplimiento de tareas operativas',       meta:95,  unidad:'%', dir:'max', responsable:'Operaciones', tab:'operaciones'},
+ {id:'cumpartes', proceso:'Operaciones',         indicador:'% Cumplimiento de partes diarios',          meta:100, unidad:'%', dir:'max', responsable:'Operaciones', tab:'operaciones'},
+ {id:'roles',     proceso:'Dirección',           indicador:'% Roles definidos',                         meta:100, unidad:'%', dir:'max', responsable:'Dirección', tab:'direccion'},
+ {id:'legal',     proceso:'SGI',                 indicador:'% Cumplimiento legal verificado',           meta:100, unidad:'%', dir:'max', responsable:'SGI', tab:'direccion'},
+ {id:'sgi',       proceso:'Dirección',           indicador:'% Avance SGI (Stage 1)',                    meta:100, unidad:'%', dir:'max', responsable:'Dirección', tab:'direccion'}
+];
+
+var DEFAULT_OBJETIVOS = [
+ {id:1, objetivo:'Incrementar la satisfacción del cliente', responsable:'Comercial / Operaciones', meta:'≥90% satisfacción', plazo:'6 meses', indicador:'', avance:0, plan:[]},
+ {id:2, objetivo:'Reducir reclamos de clientes', responsable:'Operaciones', meta:'<5% reclamos', plazo:'6 meses', indicador:'reclcli', avance:0, plan:[]},
+ {id:3, objetivo:'Reducir accidentes laborales', responsable:'SST / Operaciones', meta:'0 accidentes', plazo:'12 meses', indicador:'acc', avance:50, plan:[
+   {accion:'Capacitación PRP y cultura de seguridad trimestral', plazo:'Recurrente', responsable:'SST', estado:'En curso', resultado:'Pendiente evaluar'}
+ ]},
+ {id:4, objetivo:'Asegurar el avance del plan de implementación del SGC', responsable:'Dirección / SGI', meta:'100% avance antes de Stage 1 (sept-26)', plazo:'3 meses', indicador:'sgi', avance:65, plan:[]},
+ {id:5, objetivo:'Mejorar la organización interna (roles y comunicación)', responsable:'Dirección', meta:'100% roles definidos', plazo:'Vencido hace 4 meses', indicador:'roles', avance:40, plan:[]},
+ {id:6, objetivo:'Asegurar el control de cumplimiento legal', responsable:'SGI', meta:'100% cumplimiento verificado', plazo:'Revisión trimestral', indicador:'legal', avance:0, plan:[]},
+ {id:7, objetivo:'Fortalecer la capacitación del personal según plan anual', responsable:'RRHH / SST', meta:'≥90% capacitaciones / eficacia', plazo:'12 meses', indicador:'cap', avance:60, plan:[]}
+];
+
+var DEFAULT_DATOS = {
+ '2026-04': {cap:1},
+ '2026-05': {cap:2},
+ '2026-06': {acc:0, casi:0, cap:1, ncc:2, nctr:100, efac:100, prov:100, reclprov:0, insumos:0, docvig:71.2, ausent:4.2, sgi:65}
+};
+
+/* ============================= PERSISTENCIA ============================= */
+function loadIndicadores(){
+  var arr;
+  try{ var s = localStorage.getItem('valpob_config_indicadores'); arr = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_INDICADORES)); }
+  catch(e){ arr = JSON.parse(JSON.stringify(DEFAULT_INDICADORES)); }
+  var changed = false;
+  arr.forEach(function(ind){ if(!ind.tab){ ind.tab = inferTabFromProceso(ind.proceso); changed = true; } });
+  if(changed) saveIndicadores(arr);
+  return arr;
+}
+function saveIndicadores(arr){ localStorage.setItem('valpob_config_indicadores', JSON.stringify(arr)); }
+
+function loadObjetivos(){
+  try{ var s = localStorage.getItem('valpob_config_objetivos'); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_OBJETIVOS)); }
+  catch(e){ return JSON.parse(JSON.stringify(DEFAULT_OBJETIVOS)); }
+}
+function saveObjetivos(arr){ localStorage.setItem('valpob_config_objetivos', JSON.stringify(arr)); }
+
+function loadDatos(){
+  try{ var s = localStorage.getItem('valpob_datos'); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_DATOS)); }
+  catch(e){ return JSON.parse(JSON.stringify(DEFAULT_DATOS)); }
+}
+function saveDatos(obj){ localStorage.setItem('valpob_datos', JSON.stringify(obj)); }
+
+var indicadores = loadIndicadores();
+var objetivos = loadObjetivos();
+var datos = loadDatos();
+
+function indicadorPorId(id){ for(var i=0;i<indicadores.length;i++){ if(indicadores[i].id===id) return indicadores[i]; } return null; }
+
+function periodosOrdenados(){
+  return Object.keys(datos).sort();
+}
+function ultimoPeriodo(){
+  var p = periodosOrdenados();
+  return p.length ? p[p.length-1] : null;
+}
+function valorEnPeriodo(id, periodo){
+  if(!periodo || !datos[periodo]) return null;
+  var v = datos[periodo][id];
+  return (v===undefined || v===null || v==='') ? null : v;
+}
+function estadoValor(ind, valor){
+  if(valor===null) return 'neu';
+  var meta = parseFloat(ind.meta);
+  if(isNaN(meta)) return 'neu';
+  if(ind.dir==='min'){
+    if(valor<=meta) return 'ok';
+    if(valor<=meta*1.5+0.001) return 'warn';
+    return 'bad';
+  } else {
+    if(valor>=meta) return 'ok';
+    if(valor>=meta*0.85) return 'warn';
+    return 'bad';
+  }
+}
+function fmtValor(ind, valor){
+  if(valor===null) return '—';
+  var u = ind.unidad==='%' ? '%' : (ind.unidad==='cant' ? '' : ' '+ind.unidad);
+  var num = (Math.round(valor*10)/10).toString().replace('.',',');
+  return num + u;
+}
+function fmtMeta(ind){
+  var pre = ind.dir==='min' ? '≤' : (ind.dir==='max' && ind.unidad==='%' ? '≥' : '');
+  var u = ind.unidad==='%' ? '%' : (ind.unidad==='cant' ? '' : ' '+ind.unidad);
+  return 'Meta: '+pre+ind.meta+u;
+}
+
+/* ============================= RENDER KPI GRIDS ============================= */
+function kpiCardHTML(id, periodo, extraMeta){
+  var ind = indicadorPorId(id);
+  if(!ind) return '';
+  var valor = valorEnPeriodo(id, periodo);
+  var est = estadoValor(ind, valor);
+  var badgeClass = est==='ok'?'b-ok':est==='warn'?'b-warn':est==='bad'?'b-bad':'b-neu';
+  var badgeTxt = valor===null ? 'Sin dato cargado' : fmtMeta(ind);
+  return '<div class="kpi">'+
+    '<div class="kpi-label">'+ind.indicador+'</div>'+
+    '<div class="kpi-value">'+fmtValor(ind,valor)+'</div>'+
+    '<div class="kpi-sub"><span class="badge '+badgeClass+'">'+badgeTxt+'</span></div>'+
+    '<div class="kpi-meta">'+(extraMeta||('Responsable: '+ind.responsable))+'</div>'+
+  '</div>';
+}
+
+function renderPeriodoLabel(elId, periodo){
+  var el = document.getElementById(elId);
+  if(!el) return;
+  if(!periodo){ el.textContent = 'sin datos cargados'; return; }
+  var parts = periodo.split('-');
+  el.textContent = MESES[parseInt(parts[1],10)-1] + ' ' + parts[0];
+}
+
+function kpisPorTab(tab){ return indicadores.filter(function(i){ return i.tab===tab; }); }
+function renderGrid(containerId, tab, periodo, notaVacio){
+  var el = document.getElementById(containerId);
+  if(!el) return;
+  var arr = kpisPorTab(tab);
+  if(arr.length===0){
+    el.innerHTML = '<div class="note">'+(notaVacio||'Todavía no hay indicadores asignados a esta pestaña.')+' Agregalos o reasignalos desde "⚙ Config. indicadores" (columna "Se muestra en").</div>';
+    return;
+  }
+  el.innerHTML = arr.map(function(ind){ return kpiCardHTML(ind.id, periodo); }).join('');
+}
+
+function renderAll(){
+  var periodo = ultimoPeriodo();
+  ['resumen-periodo','comercial-periodo','operaciones-periodo','syh-periodo','calidad-periodo','doc-periodo','rrhh-periodo'].forEach(function(id){ renderPeriodoLabel(id, periodo); });
+
+  document.getElementById('resumen-kpis').innerHTML =
+    kpiCardHTML('sgi', periodo, 'Meta: 100% antes de sept-26') +
+    kpiCardHTML('acc', periodo) +
+    kpiCardHTML('ncc', periodo, '100% tratadas y cerradas si hay 2') +
+    kpiCardHTML('docvig', periodo) +
+    kpiCardHTML('ausent', periodo) +
+    kpiCardHTML('prov', periodo) +
+    kpiCardHTML('reclcli', periodo) +
+    kpiCardHTML('cap', periodo);
+
+  renderGrid('comercial-kpis', 'comercial', periodo, 'Todavía no hay indicadores de gestión comercial cargados.');
+  renderGrid('operaciones-kpis', 'operaciones', periodo);
+  renderGrid('syh-kpis', 'syh', periodo);
+  renderGrid('calidad-kpis', 'calidad', periodo);
+  renderGrid('compras-kpis', 'compras', periodo);
+  renderGrid('direccion-kpis', 'direccion', periodo);
+  renderGrid('doc-kpis', 'doc', periodo);
+  renderGrid('rrhh-kpis', 'rrhh', periodo);
+  document.getElementById('rrhh-nota').textContent = 'Ausentismo y capacitaciones se cargan mes a mes desde "✎ Cargar datos". Las vacaciones/licencias de abajo vienen de un archivo aparte.';
+
+  renderObjetivos(periodo);
+  renderTablaCargar();
+  renderTablaConfig();
+}
+
+/* ============================= OBJETIVOS ============================= */
+var ESTADOS_ACCION = ['Pendiente','En curso','Cumplido'];
+var RESULTADOS_ACCION = ['Pendiente evaluar','Eficaz','No eficaz'];
+
+function estadoBadgeObjetivo(o, periodo){
+  if(o.indicador){
+    var ind = indicadorPorId(o.indicador);
+    if(ind){
+      var valor = valorEnPeriodo(o.indicador, periodo);
+      var est = estadoValor(ind, valor);
+      var cls = est==='ok'?'b-ok':est==='warn'?'b-warn':est==='bad'?'b-bad':'b-neu';
+      var txt = valor===null ? 'Sin dato cargado (indicador)' : (est==='ok'?'En meta':(est==='warn'?'Cerca de meta':'Fuera de meta'))+' — '+fmtValor(ind,valor);
+      return '<span class="badge '+cls+'">'+txt+'</span>';
+    }
+  }
+  var av = parseFloat(o.avance)||0;
+  var cls2 = av>=90?'b-ok':(av>=50?'b-warn':'b-bad');
+  return '<span class="badge '+cls2+'">'+av+'% de avance</span>';
+}
+
+function renderObjetivos(periodo){
+  var html = '';
+  objetivos.forEach(function(o, i){
+    var opcionesInd = '<option value="">— ninguno —</option>';
+    indicadores.forEach(function(ind){ opcionesInd += '<option value="'+ind.id+'"'+(o.indicador===ind.id?' selected':'')+'>'+esc(ind.indicador)+'</option>'; });
+
+    var planRows = '<tr><th>Acción</th><th>Plazo</th><th>Responsable</th><th>Estado</th><th>Resultado</th><th></th></tr>';
+    (o.plan||[]).forEach(function(p, pi){
+      var estadoOpts = ESTADOS_ACCION.map(function(e){ return '<option'+(p.estado===e?' selected':'')+'>'+e+'</option>'; }).join('');
+      var resultOpts = RESULTADOS_ACCION.map(function(r){ return '<option'+(p.resultado===r?' selected':'')+'>'+r+'</option>'; }).join('');
+      planRows += '<tr>'+
+        '<td><input type="text" data-plan="accion" data-oi="'+i+'" data-pi="'+pi+'" value="'+esc(p.accion)+'"></td>'+
+        '<td><input type="text" data-plan="plazo" data-oi="'+i+'" data-pi="'+pi+'" value="'+esc(p.plazo)+'"></td>'+
+        '<td><input type="text" data-plan="responsable" data-oi="'+i+'" data-pi="'+pi+'" value="'+esc(p.responsable)+'"></td>'+
+        '<td><select data-plan="estado" data-oi="'+i+'" data-pi="'+pi+'">'+estadoOpts+'</select></td>'+
+        '<td><select data-plan="resultado" data-oi="'+i+'" data-pi="'+pi+'">'+resultOpts+'</select></td>'+
+        '<td><button class="btn-sm btn-danger" data-del-plan-oi="'+i+'" data-del-plan-pi="'+pi+'">Eliminar</button></td>'+
+      '</tr>';
+    });
+    if((o.plan||[]).length===0){ planRows += '<tr><td colspan="6" style="text-align:center;color:#888780">Sin acciones cargadas todavía</td></tr>'; }
+
+    html += '<div class="obj-card">'+
+      '<div class="obj-head">'+
+        '<div style="flex:1;min-width:260px"><input type="text" data-obj="objetivo" data-i="'+i+'" value="'+esc(o.objetivo)+'" style="font-size:13.5px;font-weight:700;color:#1A1A2E"></div>'+
+        estadoBadgeObjetivo(o, periodo)+
+        '<button class="btn-sm btn-danger" data-del-obj="'+i+'">Eliminar objetivo</button>'+
+      '</div>'+
+      '<div class="grid4" style="margin-top:8px">'+
+        '<div><div class="kpi-label">Responsable</div><input type="text" data-obj="responsable" data-i="'+i+'" value="'+esc(o.responsable)+'"></div>'+
+        '<div><div class="kpi-label">Meta</div><input type="text" data-obj="meta" data-i="'+i+'" value="'+esc(o.meta)+'"></div>'+
+        '<div><div class="kpi-label">Plazo</div><input type="text" data-obj="plazo" data-i="'+i+'" value="'+esc(o.plazo)+'"></div>'+
+        '<div><div class="kpi-label">Indicador vinculado</div><select data-obj="indicador" data-i="'+i+'">'+opcionesInd+'</select></div>'+
+      '</div>'+
+      '<div style="margin-top:8px;max-width:260px"><div class="kpi-label">Avance manual (%) — se usa si no hay indicador vinculado</div>'+
+        '<input type="number" min="0" max="100" data-obj="avance" data-i="'+i+'" value="'+(o.avance!==undefined?o.avance:0)+'">'+
+        '<div class="progress-wrap"><div class="progress-bar '+(( (o.avance||0)>=90)?'p-ok':((o.avance||0)>=50?'p-warn':'p-bad'))+'" style="width:'+(o.avance||0)+'%"></div></div>'+
+      '</div>'+
+      '<div style="margin-top:14px;font-size:11px;font-weight:700;color:#5F5E5A;text-transform:uppercase;letter-spacing:.05em">Plan de acción</div>'+
+      '<table style="margin-top:6px">'+planRows+'</table>'+
+      '<button class="btn-sm btn-ghost" style="margin-top:6px" data-add-plan-oi="'+i+'">+ Agregar acción</button>'+
+    '</div>';
+  });
+  document.getElementById('objetivos-list').innerHTML = html;
+}
+function recolectarObjetivosDesdeUI(){
+  document.querySelectorAll('[data-obj]').forEach(function(inp){
+    var i = parseInt(inp.getAttribute('data-i'),10);
+    var campo = inp.getAttribute('data-obj');
+    var val = inp.value;
+    if(campo==='avance') val = parseFloat(val)||0;
+    objetivos[i][campo] = val;
+  });
+  document.querySelectorAll('[data-plan]').forEach(function(inp){
+    var oi = parseInt(inp.getAttribute('data-oi'),10);
+    var pi = parseInt(inp.getAttribute('data-pi'),10);
+    var campo = inp.getAttribute('data-plan');
+    objetivos[oi].plan[pi][campo] = inp.value;
+  });
+}
+function guardarObjetivos(){
+  recolectarObjetivosDesdeUI();
+  saveObjetivos(objetivos);
+  toast('Objetivos guardados');
+  renderAll();
+}
+function agregarObjetivo(){
+  recolectarObjetivosDesdeUI();
+  var maxId = objetivos.reduce(function(m,o){return Math.max(m,o.id);},0);
+  objetivos.push({id:maxId+1, objetivo:'Nuevo objetivo', responsable:'—', meta:'—', plazo:'—', indicador:'', avance:0, plan:[]});
+  saveObjetivos(objetivos);
+  renderObjetivos(ultimoPeriodo());
+}
+function eliminarObjetivo(i){
+  recolectarObjetivosDesdeUI();
+  if(!confirm('¿Eliminar este objetivo?')) return;
+  objetivos.splice(i,1);
+  saveObjetivos(objetivos);
+  toast('Objetivo eliminado');
+  renderAll();
+}
+function agregarAccionPlan(oi){
+  recolectarObjetivosDesdeUI();
+  if(!objetivos[oi].plan) objetivos[oi].plan = [];
+  objetivos[oi].plan.push({accion:'Nueva acción', plazo:'—', responsable:'—', estado:'Pendiente', resultado:'Pendiente evaluar'});
+  saveObjetivos(objetivos);
+  renderObjetivos(ultimoPeriodo());
+}
+function eliminarAccionPlan(oi, pi){
+  recolectarObjetivosDesdeUI();
+  if(!confirm('¿Eliminar esta acción del plan?')) return;
+  objetivos[oi].plan.splice(pi,1);
+  saveObjetivos(objetivos);
+  toast('Acción eliminada');
+  renderAll();
+}
+document.getElementById('objetivos-list').addEventListener('click', function(e){
+  var delObj = e.target.getAttribute('data-del-obj');
+  if(delObj!==null){ eliminarObjetivo(parseInt(delObj,10)); return; }
+  var addPlan = e.target.getAttribute('data-add-plan-oi');
+  if(addPlan!==null){ agregarAccionPlan(parseInt(addPlan,10)); return; }
+  var delPlanOi = e.target.getAttribute('data-del-plan-oi');
+  if(delPlanOi!==null){ eliminarAccionPlan(parseInt(delPlanOi,10), parseInt(e.target.getAttribute('data-del-plan-pi'),10)); return; }
+});
+// Autoguardado: cada tecla o selección se guarda sola, sin depender del botón "Guardar objetivos"
+document.getElementById('objetivos-list').addEventListener('input', function(e){
+  var t = e.target;
+  if(t.hasAttribute('data-obj')){
+    var i = parseInt(t.getAttribute('data-i'),10);
+    var campo = t.getAttribute('data-obj');
+    objetivos[i][campo] = campo==='avance' ? (parseFloat(t.value)||0) : t.value;
+    saveObjetivos(objetivos);
+  } else if(t.hasAttribute('data-plan')){
+    var oi = parseInt(t.getAttribute('data-oi'),10);
+    var pi = parseInt(t.getAttribute('data-pi'),10);
+    objetivos[oi].plan[pi][t.getAttribute('data-plan')] = t.value;
+    saveObjetivos(objetivos);
+  }
+});
+document.getElementById('objetivos-list').addEventListener('change', function(e){
+  var t = e.target;
+  if(t.tagName!=='SELECT') return;
+  if(t.hasAttribute('data-obj')){
+    var i = parseInt(t.getAttribute('data-i'),10);
+    objetivos[i][t.getAttribute('data-obj')] = t.value;
+    saveObjetivos(objetivos);
+    renderObjetivos(ultimoPeriodo());
+  } else if(t.hasAttribute('data-plan')){
+    var oi = parseInt(t.getAttribute('data-oi'),10);
+    var pi = parseInt(t.getAttribute('data-pi'),10);
+    objetivos[oi].plan[pi][t.getAttribute('data-plan')] = t.value;
+    saveObjetivos(objetivos);
+  }
+});
+
+/* ============================= CARGAR DATOS TAB ============================= */
+function periodoSeleccionado(){
+  var mes = document.getElementById('sel-mes').value;
+  var anio = document.getElementById('sel-anio').value;
+  return anio + '-' + String(parseInt(mes,10)+1).padStart(2,'0');
+}
+function renderTablaCargar(){
+  var periodo = periodoSeleccionado();
+  var tbl = document.getElementById('tabla-cargar');
+  var rows = '<tr><th>Proceso</th><th>Indicador</th><th>Valor real</th><th>Meta</th><th>Unidad</th></tr>';
+  indicadores.forEach(function(ind){
+    var v = valorEnPeriodo(ind.id, periodo);
+    rows += '<tr><td>'+ind.proceso+'</td><td>'+ind.indicador+'</td>'+
+      '<td><input type="number" step="0.1" data-carga-id="'+ind.id+'" value="'+(v===null?'':v)+'"></td>'+
+      '<td>'+ind.meta+'</td><td>'+ind.unidad+'</td></tr>';
+  });
+  tbl.innerHTML = rows;
+}
+function guardarPeriodo(){
+  var periodo = periodoSeleccionado();
+  var obj = datos[periodo] || {};
+  document.querySelectorAll('[data-carga-id]').forEach(function(inp){
+    var val = inp.value.trim();
+    if(val==='') { delete obj[inp.getAttribute('data-carga-id')]; }
+    else { obj[inp.getAttribute('data-carga-id')] = parseFloat(val.replace(',','.')); }
+  });
+  datos[periodo] = obj;
+  saveDatos(datos);
+  toast('Período guardado: '+periodo);
+  renderAll();
+}
+// Autoguardado: cada valor cargado se guarda solo apenas lo tipeás
+document.getElementById('tabla-cargar').addEventListener('input', function(e){
+  var t = e.target;
+  if(!t.hasAttribute('data-carga-id')) return;
+  var periodo = periodoSeleccionado();
+  var obj = datos[periodo] || {};
+  var val = t.value.trim();
+  if(val===''){ delete obj[t.getAttribute('data-carga-id')]; }
+  else { obj[t.getAttribute('data-carga-id')] = parseFloat(val.replace(',','.')); }
+  datos[periodo] = obj;
+  saveDatos(datos);
+});
+function borrarPeriodo(){
+  var periodo = periodoSeleccionado();
+  if(!datos[periodo]){ toast('Ese período no tiene datos guardados'); return; }
+  if(!confirm('¿Borrar todos los valores cargados de '+periodo+'?')) return;
+  delete datos[periodo];
+  saveDatos(datos);
+  toast('Período borrado: '+periodo);
+  renderAll();
+}
+function exportarCSV(){
+  var rows = [['Período','Proceso','Indicador','Valor real','Meta','Unidad']];
+  periodosOrdenados().forEach(function(periodo){
+    indicadores.forEach(function(ind){
+      var v = valorEnPeriodo(ind.id, periodo);
+      if(v!==null){ rows.push([periodo, ind.proceso, ind.indicador, v, ind.meta, ind.unidad]); }
+    });
+  });
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'indicadores_valpob_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ============================= CONFIG INDICADORES TAB ============================= */
+function renderTablaConfig(){
+  var tbl = document.getElementById('tabla-config');
+  var rows = '<tr><th>Proceso</th><th>Indicador</th><th>Meta</th><th>Unidad</th><th>Dirección</th><th>Responsable</th><th>Se muestra en</th><th></th></tr>';
+  indicadores.forEach(function(ind, i){
+    var tabOpts = TAB_OPTIONS.map(function(t){ return '<option value="'+t.id+'"'+(ind.tab===t.id?' selected':'')+'>'+t.label+'</option>'; }).join('');
+    rows += '<tr>'+
+      '<td><input type="text" data-cfg="proceso" data-i="'+i+'" value="'+esc(ind.proceso)+'"></td>'+
+      '<td><input type="text" data-cfg="indicador" data-i="'+i+'" value="'+esc(ind.indicador)+'"></td>'+
+      '<td><input type="number" step="0.1" data-cfg="meta" data-i="'+i+'" value="'+ind.meta+'"></td>'+
+      '<td><input type="text" data-cfg="unidad" data-i="'+i+'" value="'+esc(ind.unidad)+'"></td>'+
+      '<td><select data-cfg="dir" data-i="'+i+'">'+
+        '<option value="max"'+(ind.dir==='max'?' selected':'')+'>Mayor es mejor</option>'+
+        '<option value="min"'+(ind.dir==='min'?' selected':'')+'>Menor es mejor</option>'+
+      '</select></td>'+
+      '<td><input type="text" data-cfg="responsable" data-i="'+i+'" value="'+esc(ind.responsable)+'"></td>'+
+      '<td><select data-cfg="tab" data-i="'+i+'">'+tabOpts+'</select></td>'+
+      '<td><button class="btn-sm btn-danger" data-del-ind="'+i+'">Eliminar</button></td>'+
+    '</tr>';
+  });
+  tbl.innerHTML = rows;
+}
+function esc(s){ return String(s===undefined?'':s).replace(/"/g,'&quot;'); }
+function guardarConfig(){
+  document.querySelectorAll('[data-cfg]').forEach(function(inp){
+    var i = parseInt(inp.getAttribute('data-i'),10);
+    var campo = inp.getAttribute('data-cfg');
+    var val = inp.value;
+    if(campo==='meta') val = parseFloat(val.replace(',','.'))||0;
+    indicadores[i][campo] = val;
+  });
+  saveIndicadores(indicadores);
+  toast('Configuración de indicadores guardada');
+  renderAll();
+}
+function agregarIndicador(){
+  var n = indicadores.length+1;
+  indicadores.push({id:'ind_'+Date.now(), proceso:'Proceso nuevo', indicador:'Nuevo indicador '+n, meta:100, unidad:'%', dir:'max', responsable:'—', tab:'comercial'});
+  saveIndicadores(indicadores);
+  renderTablaConfig();
+}
+// Autoguardado: cada tecla o selección en la tabla de indicadores se guarda sola
+document.getElementById('tabla-config').addEventListener('input', function(e){
+  var t = e.target;
+  if(!t.hasAttribute('data-cfg')) return;
+  var i = parseInt(t.getAttribute('data-i'),10);
+  var campo = t.getAttribute('data-cfg');
+  var val = campo==='meta' ? (parseFloat(t.value.replace(',','.'))||0) : t.value;
+  indicadores[i][campo] = val;
+  saveIndicadores(indicadores);
+});
+document.getElementById('tabla-config').addEventListener('change', function(e){
+  var t = e.target;
+  if(t.tagName!=='SELECT' || !t.hasAttribute('data-cfg')) return;
+  var i = parseInt(t.getAttribute('data-i'),10);
+  indicadores[i][t.getAttribute('data-cfg')] = t.value;
+  saveIndicadores(indicadores);
+  renderAll();
+});
+function eliminarIndicador(i){
+  if(!confirm('¿Eliminar este indicador? También desaparecerá de los objetivos que lo tengan vinculado.')) return;
+  var idElim = indicadores[i].id;
+  indicadores.splice(i,1);
+  objetivos.forEach(function(o){ if(o.indicador===idElim) o.indicador=''; });
+  saveIndicadores(indicadores);
+  saveObjetivos(objetivos);
+  toast('Indicador eliminado');
+  renderAll();
+}
+function restaurarConfig(){
+  if(!confirm('¿Restaurar los indicadores a los valores originales? Se pierden los cambios de configuración (no se pierden los datos mensuales cargados).')) return;
+  indicadores = JSON.parse(JSON.stringify(DEFAULT_INDICADORES));
+  saveIndicadores(indicadores);
+  toast('Indicadores restaurados');
+  renderAll();
+}
+
+/* ============================= UI GENERAL ============================= */
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+document.querySelectorAll('.tab').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+    document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+    btn.classList.add('active');
+  });
+});
+
+// selects de mes/año
+(function initSelects(){
+  var selMes = document.getElementById('sel-mes');
+  MESES.forEach(function(m,i){ var o=document.createElement('option'); o.value=i; o.textContent=m; selMes.appendChild(o); });
+  var selAnio = document.getElementById('sel-anio');
+  [2025,2026,2027].forEach(function(a){ var o=document.createElement('option'); o.value=a; o.textContent=a; selAnio.appendChild(o); });
+  var hoy = new Date();
+  selMes.value = 5; // junio por defecto (índice 5)
+  selAnio.value = 2026;
+  selMes.addEventListener('change', renderTablaCargar);
+  selAnio.addEventListener('change', renderTablaCargar);
+})();
+
+document.getElementById('btn-guardar-periodo').addEventListener('click', guardarPeriodo);
+document.getElementById('btn-borrar-periodo').addEventListener('click', borrarPeriodo);
+document.getElementById('btn-exportar-csv').addEventListener('click', exportarCSV);
+document.getElementById('btn-cargar-guardado').addEventListener('click', renderTablaCargar);
+
+document.getElementById('btn-agregar-indicador').addEventListener('click', agregarIndicador);
+document.getElementById('btn-guardar-config').addEventListener('click', guardarConfig);
+document.getElementById('btn-restaurar-config').addEventListener('click', restaurarConfig);
+document.getElementById('tabla-config').addEventListener('click', function(e){
+  var i = e.target.getAttribute('data-del-ind');
+  if(i!==null) eliminarIndicador(parseInt(i,10));
+});
+
+document.getElementById('btn-agregar-objetivo').addEventListener('click', agregarObjetivo);
+document.getElementById('btn-guardar-objetivos').addEventListener('click', guardarObjetivos);
+document.getElementById('btn-restaurar-objetivos').addEventListener('click', function(){
+  if(!confirm('¿Restaurar los objetivos a los valores originales?')) return;
+  objetivos = JSON.parse(JSON.stringify(DEFAULT_OBJETIVOS));
+  saveObjetivos(objetivos);
+  toast('Objetivos restaurados');
+  renderAll();
+});
+/* ============================= INICIO ============================= */
+renderAll();
+
+/* ============================= CHARTS FIJOS (Comercial / Seguridad) ============================= */
+try{
+Chart.defaults.font.family = "Arial, Helvetica, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = "#5F5E5A";
+
+var mesesCortos = ['Ene','Feb','Mar','Abr','May','Jun'];
+var cotCantidad = [28,35,31,56,44,43];
+var cotAprobPct = [39.3,48.6,48.4,71.4,72.7,60.5];
+
+function mkChart(id, type, labels, datasets, opts){
+  var canvas = document.getElementById(id);
+  if(!canvas) return;
+  new Chart(canvas, {
+    type: type,
+    data: {labels: labels, datasets: datasets},
+    options: Object.assign({
+      responsive:true,
+      plugins:{legend:{display: datasets.length>1, labels:{boxWidth:10,font:{size:10}}}},
+      scales: type==='doughnut' || type==='pie' ? {} : {
+        y:{beginAtZero:true, grid:{color:'#ECEAE2'}, ticks:{font:{size:10}}},
+        x:{grid:{display:false}, ticks:{font:{size:10}}}
+      }
+    }, opts || {})
+  });
+}
+
+mkChart('ch-resumen-com', 'bar', mesesCortos, [
+  {type:'bar', label:'Cotizaciones emitidas', data:cotCantidad, backgroundColor:'#9FE1CB', yAxisID:'y'},
+  {type:'line', label:'% Aprobación', data:cotAprobPct, borderColor:'#1A1A2E', backgroundColor:'#1A1A2E', tension:.3, yAxisID:'y1'}
+], {
+  scales:{
+    y:{beginAtZero:true, position:'left', grid:{color:'#ECEAE2'}, ticks:{font:{size:10}}},
+    y1:{beginAtZero:true, position:'right', grid:{display:false}, ticks:{font:{size:10}, callback:function(v){return v+'%'}}, max:100},
+    x:{grid:{display:false}, ticks:{font:{size:10}}}
+  }
+});
+mkChart('ch-com-mes', 'bar', mesesCortos, [
+  {type:'bar', label:'Cotizaciones', data:cotCantidad, backgroundColor:'#9FE1CB', yAxisID:'y'},
+  {type:'line', label:'% Aprobación', data:cotAprobPct, borderColor:'#1A1A2E', backgroundColor:'#1A1A2E', tension:.3, yAxisID:'y1'}
+], {
+  scales:{
+    y:{beginAtZero:true, position:'left', grid:{color:'#ECEAE2'}, ticks:{font:{size:10}}},
+    y1:{beginAtZero:true, position:'right', grid:{display:false}, ticks:{font:{size:10}, callback:function(v){return v+'%'}}, max:100},
+    x:{grid:{display:false}, ticks:{font:{size:10}}}
+  }
+});
+mkChart('ch-com-estado', 'doughnut', ['Aprobado','Rechazado','Vencido','Vigente'], [
+  {data:[141,57,35,4], backgroundColor:['#22c55e','#ef4444','#f59e0b','#3b82f6']}
+]);
+mkChart('ch-com-vendedor', 'bar', ['Soledad M.','Javier V.','Iván G.','Estefanía V.','Gonzalo A.','Nicolás F.'], [
+  {label:'% Aprobación', data:[100,66.7,62.9,54.8,55.1,42.5], backgroundColor:'#9FE1CB'}
+], {indexAxis:'y', scales:{x:{beginAtZero:true, max:100, grid:{color:'#ECEAE2'}, ticks:{callback:function(v){return v+'%'}}}, y:{grid:{display:false}}}});
+mkChart('ch-cap', 'bar', mesesCortos, [
+  {label:'Capacitaciones', data:[0,0,0,1,2,1], backgroundColor:'#9FE1CB'}
+]);
+mkChart('ch-vac-dist', 'bar', ['0 días','1-6 días','7-13 días','14+ días'], [
+  {label:'Colaboradores', data:[31,2,10,2], backgroundColor:['#22c55e','#3b82f6','#f59e0b','#ef4444']}
+]);
+} catch(e){ console.error('No se pudieron dibujar los gráficos (Chart.js no cargó):', e); }
+</script>
+</body>
+</html>
